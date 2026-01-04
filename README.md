@@ -1,43 +1,59 @@
-# goschedviz
+# 📊 goschedviz
 
-A production-quality Go CLI tool that analyzes runtime trace files and explains scheduler behavior and performance bottlenecks.
+> **Production-quality Go CLI tool for trace analysis & performance optimization**
 
-## Overview
+`goschedviz` parses Go execution traces and explains **WHY** your program is slow, pinpointing scheduler bottlenecks, mutex contention, and GC pauses with actionable insights.
 
-`goschedviz` parses Go execution traces (generated via `go test -trace` or `runtime/trace`) and provides human-readable insights into:
+---
 
-- **Goroutine lifecycle** and state transitions
-- **Blocking patterns** (channel operations, mutex contention, syscalls, GC pauses)
-- **Scheduler behavior** (running/runnable/blocked states)
-- **Performance bottlenecks** with actionable explanations
+## 🚀 Installation
 
-Unlike raw trace viewers, `goschedviz` **explains WHY your program is slow**, not just what happened.
-
-## Installation
+### Option A: Download Pre-built Binary (Recommended)
+You can download the latest binary for your OS from the [Releases](https://github.com/sargisis/goschedviz/releases) page.
 
 ```bash
-go install github.com/goschedviz/goschedviz/cmd/goschedviz@latest
+# Example for Linux AMD64
+curl -L https://github.com/sargisis/goschedviz/releases/latest/download/goschedviz-linux-amd64 -o goschedviz
+chmod +x goschedviz
+sudo mv goschedviz /usr/local/bin/
 ```
 
-Or build from source:
-
+### Option B: Install via Go
 ```bash
-git clone https://github.com/goschedviz/goschedviz
+go install github.com/sargisis/goschedviz/cmd/goschedviz@latest
+```
+
+### Option C: Build from Source
+```bash
+git clone https://github.com/sargisis/goschedviz
 cd goschedviz
 go build -o goschedviz ./cmd/goschedviz
 ```
 
+---
+
+## 🔎 Key Features
+
+| Feature | Description |
+| :--- | :--- |
+| **TUI Dashboard** | Interactive terminal UI for deep-dive trace exploration. |
+| **Insights Engine** | Automated analysis that explains bottlenecks in plain English. |
+| **Live Profiling** | Connect to a running server's pprof endpoint directly. |
+| **JSON Export** | Export analysis results for CI/CD or custom reporting. |
+
+---
+
 ## 🌍 Real-World Workflow
 
 **1. Capture a Trace**
-Run your Go application and capture a trace file using the standard library or curl:
+Capture a trace file using the standard library or curl:
 ```bash
-# Option A: From code (runtime/trace)
+# Option A: From code
 f, _ := os.Create("trace.out")
 trace.Start(f)
 defer trace.Stop()
 
-# Option B: From a running server (net/http/pprof)
+# Option B: From a running server
 curl -o trace.out "http://localhost:6060/debug/pprof/trace?seconds=5"
 ```
 
@@ -45,180 +61,11 @@ curl -o trace.out "http://localhost:6060/debug/pprof/trace?seconds=5"
 Check for high-level issues. If the command exits with code 2, performance alerts were triggered.
 ```bash
 goschedviz analyze trace.out
-```
-
-**3. Deep Dive**
-Use the interactive explorer or insights engine to find the root cause.
-```bash
+# or
 goschedviz explore trace.out
 # or
 goschedviz insights trace.out
 ```
-
-## Usage Examples
-
-### Basic Analysis
-
-```bash
-$ goschedviz trace.out
-
-GOSCHEDVIZ TRACE ANALYSIS
-================================================================================
-
-SUMMARY
---------------------------------------------------------------------------------
-Total goroutines:     1423
-Peak goroutines:      3821
-Total blocked time:   12.5s
-Total runtime:        4.2s
-
-BLOCKING BREAKDOWN
---------------------------------------------------------------------------------
-channel receive:     48.2%  (6.02s)
-mutex lock:          27.1%  (3.39s)
-syscall:             15.3%  (1.91s)
-GC:                  9.4%   (1.18s)
-
-TOP BLOCKED GOROUTINES
---------------------------------------------------------------------------------
-Goroutine ID    Blocked Time Primary Reason
---------------------------------------------------------------------------------
-#1234           2.10s        channel receive
-#987            1.40s        mutex lock
-#2456           890.00ms     syscall
-#3142           720.00ms     channel receive
-#1891           650.00ms     mutex lock
-
-⚠️  PERFORMANCE ISSUES DETECTED
---------------------------------------------------------------------------------
-1. Excessive channel receive blocking (>40%)
-2. High mutex contention (>30%)
-```
-
-### JSON Output
-
-```bash
-$ goschedviz --json trace.out
-
-{
-  "total_goroutines": 1423,
-  "peak_goroutines": 3821,
-  "total_blocked_time": "12.5s",
-  "total_runtime": "4.2s",
-  "blocking_breakdown": {
-    "channel receive": {
-      "duration": "6.02s",
-      "percentage": 48.2
-    },
-    "mutex lock": {
-      "duration": "3.39s",
-      "percentage": 27.1
-    }
-  },
-  "top_blocked_goroutines": [
-    {
-      "id": 1234,
-      "total_blocked": "2.10s",
-      "total_runtime": "320ms",
-      "total_runnable": "180ms",
-      "primary_blocking_reason": "channel receive",
-      "blocking_events_count": 342
-    }
-  ],
-  "has_performance_issues": true,
-  "issues": [
-    "Excessive channel receive blocking (>40%)",
-    "High mutex contention (>30%)"
-  ]
-}
-```
-
-### Exit Codes
-
-- **0**: Normal execution, no performance issues
-- **1**: Error (invalid trace file, parsing failure)
-- **2**: Performance issues detected (use in CI to fail builds with scheduler problems)
-
-```bash
-goschedviz trace.out
-if [ $? -eq 2 ]; then
-  echo "Performance bottlenecks detected!"
-fi
-```
-
-## Architecture
-
-### Package Structure
-
-```
-goschedviz/
-├── cmd/goschedviz/         # CLI entry point (thin delegation layer)
-│   └── main.go
-├── internal/
-│   ├── model/              # Core data types (GoroutineInfo, BlockingEvent, Summary)
-│   │   └── types.go
-│   ├── traceparser/        # Concurrent trace file parser
-│   │   └── parser.go
-│   ├── scheduler/          # Goroutine state machine reconstruction
-│   │   └── statemachine.go
-│   ├── analyzer/           # Performance bottleneck detection
-│   │   └── analyzer.go
-│   ├── stats/              # Metrics aggregation
-│   │   └── aggregator.go
-│   └── output/             # Human-readable & JSON formatters
-│       ├── formatter.go
-│       └── json.go
-└── README.md
-```
-### Usage
-
-1. **Generate a trace** from your application:
-   ```go
-   f, _ := os.Create("trace.out")
-   trace.Start(f)
-   defer trace.Stop()
-   ```
-
-2. **Analyze** with `goschedviz`:
-   ```bash
-   # Standard summary
-   ./goschedviz trace.out
-
-   # Detailed goroutine drill-down
-   ./goschedviz --goroutine 42 trace.out
-   ```
-
----
-
-## 🛠️ Commands
-
-| Flag | Description |
-| :--- | :--- |
-| `--top-blocked` | Only show the top N blocked goroutines. |
-| `--goroutine <ID>` | Show deep-dive timeline and metrics for a specific ID. |
-| `--json` | Output analysis results in structured JSON format. |
-
----
-
-## ⚖️ Performance Indicators
-
-⚡️ Goschedviz
-
-> **Interactive Visualization for the Go Scheduler & Execution Tracer**
-
-`goschedviz` is a TUI (Terminal User Interface) tool that helps you analyze why your Go programs are waiting. It parses Go execution traces to visualize **goroutine latency**, **blocking events**, and **bottlenecks** in real-time or from file.
-
----
-
-## ✨ Features
-
-*   **🖥 Unified Dashboard**: New TUI 3.0 "Command Center" (Single entry point).
-*   **📡 Live Monitor**: Connect to any running Go app via Pprof and watch metrics in real-time.
-*   **📊 Bottleneck Analysis**: Instantly see `Blocked` vs `Runtime` ratios.
-*   **🔍 Interactive Explorer**: Sort, Filter, and Inspect individual goroutines with vim-like navigation.
-*   **🔌 Framework Support**: Works with standard `net/http`, Gin, Echo, and Chi.
-
----
 
 ## 🚀 Installation
 

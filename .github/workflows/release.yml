@@ -1,0 +1,79 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.21'
+
+      - name: Build binaries
+        run: |
+          # Linux AMD64
+          GOOS=linux GOARCH=amd64 go build -o goschedviz-linux-amd64 ./cmd/goschedviz
+          
+          # Linux ARM64
+          GOOS=linux GOARCH=arm64 go build -o goschedviz-linux-arm64 ./cmd/goschedviz
+          
+          # macOS AMD64
+          GOOS=darwin GOARCH=amd64 go build -o goschedviz-darwin-amd64 ./cmd/goschedviz
+          
+          # macOS ARM64 (M1/M2)
+          GOOS=darwin GOARCH=arm64 go build -o goschedviz-darwin-arm64 ./cmd/goschedviz
+          
+          # Windows AMD64
+          GOOS=windows GOARCH=amd64 go build -o goschedviz-windows-amd64.exe ./cmd/goschedviz
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            goschedviz-linux-amd64
+            goschedviz-linux-arm64
+            goschedviz-darwin-amd64
+            goschedviz-darwin-arm64
+            goschedviz-windows-amd64.exe
+          body: |
+            ## goschedviz ${{ github.ref_name }}
+            
+            Production-quality Go CLI tool for trace analysis.
+            
+            ### Installation
+            
+            **Linux (AMD64):**
+            ```bash
+            curl -L https://github.com/sargisis/goschedviz/releases/download/${{ github.ref_name }}/goschedviz-linux-amd64 -o goschedviz
+            chmod +x goschedviz
+            sudo mv goschedviz /usr/local/bin/
+            ```
+            
+            **macOS (Intel):**
+            ```bash
+            curl -L https://github.com/sargisis/goschedviz/releases/download/${{ github.ref_name }}/goschedviz-darwin-amd64 -o goschedviz
+            chmod +x goschedviz
+            sudo mv goschedviz /usr/local/bin/
+            ```
+            
+            **macOS (M1/M2):**
+            ```bash
+            curl -L https://github.com/sargisis/goschedviz/releases/download/${{ github.ref_name }}/goschedviz-darwin-arm64 -o goschedviz
+            chmod +x goschedviz
+            sudo mv goschedviz /usr/local/bin/
+            ```
+            
+            ### What's New
+            See [README.md](https://github.com/sargisis/goschedviz/blob/main/README.md) for full documentation.

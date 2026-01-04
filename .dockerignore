@@ -1,0 +1,15 @@
+# Binaries
+goschedviz
+*.exe
+*.test
+
+# Development
+.git
+.gitignore
+*.md
+examples/
+cmd/
+
+# IDE
+.vscode/
+.idea/
