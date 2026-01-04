@@ -1,0 +1,38 @@
+# Binaries
+# The compiled tool itself
+goschedviz
+# Standard go binaries
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool, specifically when used with LiteIDE
+*.out
+
+# Project specific trace files
+trace.out
+trace_live.out
+trace_live_*.out
+
+# Development Artifacts
+vendor/
+go.work
+
+# OS Specific
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDEs
+.idea/
+.vscode/
+*.swp
