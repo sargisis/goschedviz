@@ -66,28 +66,6 @@ goschedviz explore trace.out
 # or
 goschedviz insights trace.out
 ```
-
-## 🚀 Installation
-
-### Option 1: Go Install (Recommended)
-```bash
-go install github.com/goschedviz/goschedviz/cmd/goschedviz@latest
-```
-Now you can run it effectively from anywhere:
-```bash
-goschedviz
-```
-
-### Option 2: Docker
-Build and run with creating a container:
-```bash
-docker build -t goschedviz .
-docker run -it --net=host goschedviz
-```
-*(Note: `--net=host` is required to access localhost Pprof endpoints)*
-
----
-
 ## 🎮 How to Use
 
 ### 1. Launch the Dashboard
